@@ -63,3 +63,13 @@ let rec forall p l = (* ('a -> bool) -> 'a list -> bool *)
 (* Problem 8 *)
 let double f n = (* ('a -> 'a) -> 'a -> 'a *)
   f (f n)
+
+(* Problem 9 *)
+type btree = Empty | Node of int * btree * btree
+
+let rec mem n tree = (* int -> btree -> bool *)
+  match tree with
+  | Empty -> false
+  | Node (node, left, right) ->
+    n = node || mem n left || mem n right
+
