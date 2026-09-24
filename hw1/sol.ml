@@ -73,3 +73,17 @@ let rec mem n tree = (* int -> btree -> bool *)
   | Node (node, left, right) ->
     n = node || mem n left || mem n right
 
+(* Problem 10 *)
+type btree =
+| Leaf of int
+| Left of btree
+| Right of btree
+| LeftRight of btree * btree
+
+let rec mirror tree = (* btree -> btree *)
+  match tree with
+  | Leaf _ -> tree
+  | Left t -> Right (mirror t)
+  | Right t -> Left (mirror t)
+  | LeftRight (l, r) -> LeftRight (mirror r, mirror l)
+
