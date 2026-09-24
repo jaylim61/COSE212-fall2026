@@ -38,7 +38,6 @@ let rec max l = (* int list -> int *)
     let maxtl = max tl in
       if hd > maxtl then hd else maxtl
 
-
 (* Problem 6 *)
 let sigma f a b = (* (int -> int) -> int -> int -> int *)
   let rec sum l acc =
@@ -60,3 +59,7 @@ let rec forall p l = (* ('a -> bool) -> 'a list -> bool *)
   match l with
   | [] -> true
   | hd::tl -> p hd && forall p tl
+
+(* Problem 8 *)
+let double f n = (* ('a -> 'a) -> 'a -> 'a *)
+  f (f n)
