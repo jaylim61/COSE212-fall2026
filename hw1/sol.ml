@@ -87,3 +87,24 @@ let rec mirror tree = (* btree -> btree *)
   | Right t -> Left (mirror t)
   | LeftRight (l, r) -> LeftRight (mirror r, mirror l)
 
+(* Problem 11 *)
+type nat = ZERO | SUCC of nat
+
+let rec natadd m n = (* nat -> nat -> nat *)
+  match n with
+  | ZERO -> m
+  | SUCC k -> natadd (SUCC m) k
+
+let natmul m n = (* nat -> nat -> nat *)
+  let rec aux k acc =
+    match k with
+    | ZERO -> acc
+    | SUCC i -> aux i (natadd acc m)
+  in aux n ZERO
+
+let zero = ZERO
+let one = SUCC zero
+let two = SUCC one
+let three = SUCC two
+let four = SUCC three
+let five = SUCC four
