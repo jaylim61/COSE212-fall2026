@@ -1,3 +1,5 @@
+exception NotImplemented;;
+
 (* Problem 1 *)
 let prime n = (* int -> bool *)
   if n < 2 then false
@@ -123,7 +125,13 @@ and exp =
 | Plus of exp * exp
 | Minus of exp * exp
 
-let rec eval f =
+let rec evalexp e =
+  match e with
+  | Num n -> n
+  | Plus (m, n) -> (evalexp m) + (evalexp n)
+  | Minus (m, n) -> (evalexp m) - (evalexp n)
+
+let rec eval f = (* formula -> bool *)
   match f with
   | True -> true
   | False -> false
@@ -131,12 +139,69 @@ let rec eval f =
   | AndAlso (p, q) -> (eval p) && (eval q)
   | OrElse (p, q) -> (eval p) || (eval q)
   | Imply (p, q) -> (not (eval p)) || (eval q)
-  | Equal (p, q) ->
-    let rec evalexp e =
-      match e with
-      | Num n -> n
-      | Plus (m, n) -> (evalexp m) + (evalexp n)
-      | Minus (m, n) -> (evalexp m) - (evalexp n)
-    in (evalexp p) = (evalexp q)
+  | Equal (p, q) -> (evalexp p) = (evalexp q)
 
-      
+(* Problem 13 *)
+type aexp =
+| Const of int
+| Var of string
+| Power of string * int
+| Times of aexp list
+| Sum of aexp list
+
+let rec diff : aexp * string -> aexp
+= fun (exp, var) ->
+  match exp with
+  | Const c -> Const 0
+  | Var x ->
+    if x = var then Const 1 else Const 0 
+  | Times aexplist -> begin
+    match aexplist with
+    | [] -> Const 0
+    | hd::tl ->
+      let f'g = Times [diff (hd, var); Times tl] in
+      let fg' = Times [hd; diff (Times tl, var)] in
+      Sum [f'g; fg']
+    end
+  | Sum aexplist -> begin
+    match aexplist with
+    | [] -> Const 0
+    | hd::tl ->
+      Sum [diff (hd, var); diff (Sum tl, var)]
+    end
+  | _ -> raise NotImplemented
+
+  let p = Sum [Power ("x", 2);
+              Times [Const 2; Var "x"];
+              Const 1]
+
+(* Problem 14 *)
+type exp = X
+         | INT of int
+         | ADD of exp * exp
+         | SUB of exp * exp
+         | MUL of exp * exp
+         | DIV of exp * exp
+         | SIGMA of exp * exp * exp
+
+let calculator : exp -> int
+= fun e ->
+  let rec eval : exp -> int -> int
+    = fun expr x ->
+    match expr with
+    | X -> x
+    | INT n -> n
+    | ADD (e1, e2) -> (eval e1 x) + (eval e2 x)
+    | SUB (e1, e2) -> (eval e1 x) - (eval e2 x)
+    | MUL (e1, e2) -> (eval e1 x) * (eval e2 x)
+    | DIV (e1, e2) -> (eval e1 x) / (eval e2 x)
+    | SIGMA (e1, e2, e3) ->
+      let a = eval e1 x in
+      let b = eval e2 x in
+      (* eval e3 a + eval e3 a+1 + ... eval e3 b-1 + eval e3 b *)
+      let rec sum k acc =
+        if k > b then acc
+        else sum (k + 1) (acc + eval e3 k)
+      in sum a 0
+  in eval e 0
+  
