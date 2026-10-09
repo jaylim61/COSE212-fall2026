@@ -1,7 +1,8 @@
 exception NotImplemented;;
 
 (* Problem 1 *)
-let prime n = (* int -> bool *)
+let prime : int -> bool
+= fun n ->
   if n < 2 then false
   else
     let rec check d =
@@ -11,65 +12,74 @@ let prime n = (* int -> bool *)
     in check 2
 
 (* Problem 2 *)
-let rec range n m = (* int -> int -> int list *)
-  if n > m then []
-  else n::(range (n+1) m)
+let rec range : int -> int -> int list
+= fun m n ->
+  if m > n then []
+  else m::(range (m+1) n)
 
 (* Problem 3 *)
-let rec suml ll = (* int list list -> int *)
+let rec suml : int list list -> int
+= fun ll ->
   match ll with
   | [] -> 0
-  | hd::tl -> List.fold_left (+) 0 hd + suml tl
-
-(* one-line solution by Gemini *)
-let suml ll =
-  List.fold_left (fun acc l -> acc + List.fold_left (+) 0 l) 0 ll
+  | hd::tl ->
+    let rec sum : int list -> int
+    = fun l ->
+      match l with
+      | [] -> 0
+      | hd::tl -> hd + (sum tl)
+    in sum hd + suml tl
 
 (* Problem 4 *)
-let rec drop l n = (* 'a list -> int -> 'a list *)
+let rec drop : 'a list -> int -> 'a list
+= fun l n ->
   match l with
   | [] -> []
   | hd::tl -> if n = 0 then l else drop tl (n-1)
 
 (* Problem 5 *)
-let rec max l = (* int list -> int *)
+let rec max : int list -> int
+= fun l ->
   match l with
-  | [] -> raise (Failure "empty list")
+  | [] -> raise (Failure "Empty list")
   | [e] -> e
   | hd::tl ->
     let maxtl = max tl in
       if hd > maxtl then hd else maxtl
 
-(* Problem 6 *)
-let sigma f a b = (* (int -> int) -> int -> int -> int *)
-  let rec sum l acc =
-    match l with
-    | [] -> acc
-    | hd::tl -> sum tl (acc+hd)
-  in sum (List.map f (range a b)) 0
+let rec min : int list -> int
+= fun l ->
+  match l with
+  | [] -> raise (Failure "Empty list")
+  | [e] -> e
+  | hd::tl ->
+    let mintl = min tl in
+      if hd < mintl then hd else mintl
 
-(* Gemini's suggestion *)
-let sigma f a b =
+(* Problem 6 *)
+let sigma : (int -> int) -> int -> int -> int
+= fun f a b ->
   let rec aux k acc =
-    if k > b then acc
-    else aux (k + 1) (acc + f k)
-  in
-  aux a 0
+    if k > b then acc else aux (k + 1) (acc + f k)
+  in aux a 0
 
 (* Problem 7 *)
-let rec forall p l = (* ('a -> bool) -> 'a list -> bool *)
+let rec forall : ('a -> bool) -> 'a list -> bool
+= fun p l ->
   match l with
   | [] -> true
   | hd::tl -> p hd && forall p tl
 
 (* Problem 8 *)
-let double f n = (* ('a -> 'a) -> 'a -> 'a *)
+let double : ('a -> 'a) -> 'a -> 'a
+= fun f n ->
   f (f n)
 
 (* Problem 9 *)
 type btree = Empty | Node of int * btree * btree
 
-let rec mem n tree = (* int -> btree -> bool *)
+let rec mem : int -> btree -> bool
+= fun n tree ->
   match tree with
   | Empty -> false
   | Node (node, left, right) ->
@@ -82,7 +92,8 @@ type btree =
 | Right of btree
 | LeftRight of btree * btree
 
-let rec mirror tree = (* btree -> btree *)
+let rec mirror : btree -> btree
+= fun tree ->
   match tree with
   | Leaf _ -> tree
   | Left t -> Right (mirror t)
@@ -92,12 +103,14 @@ let rec mirror tree = (* btree -> btree *)
 (* Problem 11 *)
 type nat = ZERO | SUCC of nat
 
-let rec natadd m n = (* nat -> nat -> nat *)
+let rec natadd : nat -> nat -> nat
+= fun m n ->
   match n with
   | ZERO -> m
   | SUCC k -> natadd (SUCC m) k
 
-let natmul m n = (* nat -> nat -> nat *)
+let natmul : nat -> nat -> nat
+= fun m n ->
   let rec aux k acc =
     match k with
     | ZERO -> acc
@@ -125,13 +138,15 @@ and exp =
 | Plus of exp * exp
 | Minus of exp * exp
 
-let rec evalexp e =
+let rec evalexp : exp -> int
+= fun e ->
   match e with
   | Num n -> n
   | Plus (m, n) -> (evalexp m) + (evalexp n)
   | Minus (m, n) -> (evalexp m) - (evalexp n)
 
-let rec eval f = (* formula -> bool *)
+let rec eval : formula -> bool
+= fun f ->
   match f with
   | True -> true
   | False -> false
@@ -204,4 +219,22 @@ let calculator : exp -> int
         else sum (k + 1) (acc + eval e3 k)
       in sum a 0
   in eval e 0
-  
+
+(* Problem 15 *)
+type exp =
+  | V of var
+  | P of var * exp
+  | C of exp * exp
+and var = string
+
+let check : exp -> bool
+= fun exp ->
+  raise NotImplemented
+
+
+let f = fun a -> a
+let f = fun a -> (fun a -> a)
+let f = fun a -> (fun b -> a b)
+let f = fun a -> (a (fun b -> a))
+
+let f = fun a -> b
