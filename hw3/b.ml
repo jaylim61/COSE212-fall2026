@@ -133,7 +133,7 @@ let rec eval_aop : env -> memory -> exp -> exp -> (int -> int -> int) -> (value 
   | _ -> raise (Failure "arithmetic operation type error")
 
 and eval : env -> memory -> exp -> (value * memory)
-=fun env mem e ->
+= fun env mem e ->
   match e with
   | WRITE e ->
     let (v1,mem1) = eval env mem e in
@@ -142,4 +142,4 @@ and eval : env -> memory -> exp -> (value * memory)
   | _ -> raise NotImplemented (* TODO *)
 
 let runb : exp -> value
-=fun exp -> let (v, _) = eval empty_env empty_mem exp in v;;
+= fun exp -> let (v, _) = eval empty_env empty_mem exp in v;;
