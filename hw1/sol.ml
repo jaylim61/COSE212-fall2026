@@ -169,10 +169,13 @@ let rec diff : aexp * string -> aexp
   match exp with
   | Const c -> Const 0
   | Var x ->
-    if x = var then Const 1 else Const 0 
+    if x = var then Const 1 else Const 0
+  | Power (x, p) ->
+    if x = var then Times [Const p; Power (x, p-1)] else Const 0
   | Times aexplist -> begin
     match aexplist with
     | [] -> Const 0
+    | [e] -> diff (e, var)
     | hd::tl ->
       let f'g = Times [diff (hd, var); Times tl] in
       let fg' = Times [hd; diff (Times tl, var)] in
@@ -181,14 +184,10 @@ let rec diff : aexp * string -> aexp
   | Sum aexplist -> begin
     match aexplist with
     | [] -> Const 0
+    | [e] -> diff (e, var)
     | hd::tl ->
       Sum [diff (hd, var); diff (Sum tl, var)]
     end
-  | _ -> raise NotImplemented
-
-  let p = Sum [Power ("x", 2);
-              Times [Const 2; Var "x"];
-              Const 1]
 
 (* Problem 14 *)
 type exp = X
