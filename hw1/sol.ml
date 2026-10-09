@@ -227,14 +227,29 @@ type exp =
   | C of exp * exp
 and var = string
 
+let rec ismem : 'a -> 'a list -> bool
+= fun n list ->
+  match list with
+  | [] -> false
+  | hd::tl -> if n = hd then true else ismem n tl
+
 let check : exp -> bool
 = fun exp ->
-  raise NotImplemented
+  let rec check_env : exp -> var list -> bool
+  = fun e env ->
+    match e with
+    | V v -> ismem v env
+    | P (v, e) -> check_env e (v::env)
+    | C (e1, e2) -> check_env e1 env && check_env e2 env
+  in check_env exp []
 
+  (* Well-formed progrrams *)
+  let p1 = P ("a", V "a")
+  let p2 = P ("a", P ("a", V "a"))
+  let p3 = P ("a", P ("b", C (V "a", V "b")))
+  let p4 = P ("a", C (V "a", P ("b", V "a")))
 
-let f = fun a -> a
-let f = fun a -> (fun a -> a)
-let f = fun a -> (fun b -> a b)
-let f = fun a -> (a (fun b -> a))
-
-let f = fun a -> b
+  (* Ill-formed programs *)
+  let p5 = P ("a", V "b")
+  let p6 = P ("a", C (V "a", P ("b", V "c")))
+  let p7 = P ("a", P ("b", C (V "a", V "c")))
