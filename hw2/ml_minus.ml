@@ -78,13 +78,126 @@ let rec lookup_env x e =
   | (y,v)::tl -> if x = y then v else lookup_env x tl
 
 let rec eval : exp -> env -> value
-=fun exp env ->
+= fun exp env ->
   match exp with
+  | UNIT -> Unit
+  | TRUE -> Bool true
+  | FALSE -> Bool false
+  | CONST n -> Int n
+  | VAR v -> lookup_env v env
+  | ADD (e1, e2) -> (
+    match ((eval e1 env), (eval e2 env)) with
+    | (Int m, Int n) -> Int (m + n)
+    | _ -> raise UndefinedSemantics
+    )
+  | SUB (e1, e2) -> (
+    match ((eval e1 env), (eval e2 env)) with
+    | (Int m, Int n) -> Int (m - n)
+    | _ -> raise UndefinedSemantics
+    )
+  | MUL (e1, e2) -> (
+    match ((eval e1 env), (eval e2 env)) with
+    | (Int m, Int n) -> Int (m * n)
+    | _ -> raise UndefinedSemantics
+    )
+  | DIV (e1, e2) -> (
+    match ((eval e1 env), (eval e2 env)) with
+    | (Int m, Int n) when n <> 0 -> Int (m / n)
+    | _ -> raise UndefinedSemantics
+    )
+  | EQUAL (e1, e2) -> (
+    match ((eval e1 env), (eval e2 env)) with
+    | (Int m, Int n) -> Bool (m = n)
+    | (Bool p, Bool q) -> Bool (p = q)
+    | (Unit, Unit) -> Bool true
+    | _ -> raise UndefinedSemantics
+    )
+  | LESS (e1, e2) -> (
+    match ((eval e1 env), (eval e2 env)) with
+    | (Int m, Int n) -> Bool (m < n)
+    | _ -> raise UndefinedSemantics
+    )
+  | NOT b -> (
+    match (eval b env) with
+    | Bool p -> Bool (not p)
+    | _ -> raise UndefinedSemantics
+    )
+  | NIL -> List []
+  | CONS (e1, e2) -> (
+    match (eval e1 env, eval e2 env) with
+    | (v, List s) -> List (v :: s)
+    | _ -> raise UndefinedSemantics
+    (* This list allows mixed types *)
+    )
+    (*
+    let v = eval e1 env in
+    let s = eval e2 env in
+    match s with
+    | List s -> List (v :: s)
+    | _ -> raise UndefinedSemantics
+    *)
+  | APPEND (e1, e2) -> (
+    match ((eval e1 env), (eval e2 env)) with
+    | (List s1, List s2) -> List (s1 @ s2)
+    | _ -> raise UndefinedSemantics
+    )
+  | HEAD e ->
+    let l = eval e env in (
+      match l with
+      | List (hd :: tl) -> hd
+      | _ -> raise UndefinedSemantics
+    )
+  | TAIL e -> 
+    let l = eval e env in (
+      match l with
+      | List (_ :: tl) -> List tl
+      | _ -> raise UndefinedSemantics
+    )
+  | ISNIL e -> begin
+    match (eval e env) with
+    | List [] -> Bool true
+    | List l -> Bool false
+    | _ -> raise UndefinedSemantics
+    end
+  | IF (e1, e2, e3) -> begin
+    match (eval e1 env) with
+    | Bool true -> eval e2 env
+    | Bool false -> eval e3 env
+    | _ -> raise UndefinedSemantics
+    end
+  | LET (x, e1, e2) ->
+    eval e2 (extend_env (x, (eval e1 env)) env)
+  | LETREC (f, x, e1, e2) ->
+    eval e2 (extend_env (f, RecProcedure (f, x, e1, env)) env)
+  | LETMREC ((f, x, e1), (g, y, e2), e3) ->
+    eval e3
+    (extend_env (f, MRecProcedure (f, x, e1, g, y, e2, env))
+    (extend_env (g, MRecProcedure (g, y, e2, f, x, e1, env)) env))
+  | PROC (x, e) -> Procedure (x, e, env)
+  | CALL (e1, e2) -> (
+    match (eval e1 env) with
+    | Procedure (x, e, env') ->
+      let v = eval e2 env in
+        eval e (extend_env (x, v) env')
+    | RecProcedure (f, x, e, env') ->
+      let v = eval e2 env in
+        eval e
+        (extend_env (x, v)
+        (extend_env (f, RecProcedure (f, x, e, env')) env))
+    | MRecProcedure (f, x, ef, g, y, eg, env') ->
+      let v = eval e2 env in
+        eval ef
+        (extend_env (x, v)
+        (extend_env (f, MRecProcedure (f, x, ef, g, y, eg, env'))
+        (extend_env (g, MRecProcedure (g, y, eg, f, x, ef, env')) env)))
+    | _ -> raise UndefinedSemantics
+    ) 
   | PRINT e -> (print_endline (string_of_value (eval e env)); Unit)
+  | SEQ (e1, e2) -> eval e1 env; eval e2 env;
   | _ -> raise (Failure "Not implemented") (* TODO *)
 
 let runml : program -> value
-=fun pgm -> eval pgm empty_env
+= fun pgm -> eval pgm empty_env
 
 (***********************)
 (**  Example programs **)
@@ -119,7 +232,7 @@ let double =
 (*
   letrec even(x) = if (x = 0) then true else odd(x-1)
          odd(x) = if (x = 0) then false else even(x-1)
-  in (even 13)
+  in (odd 13)
 *)
 let evenodd = 
   LETMREC (("even", "x", IF (EQUAL (VAR "x", CONST 0), TRUE, CALL (VAR "odd",  SUB (VAR "x", CONST 1)))),
@@ -194,5 +307,3 @@ let zrange =
                IF (EQUAL (VAR "n", CONST 1), CONS (CONST 1, NIL),
                  CONS (VAR "n", CALL (VAR "range", SUB (VAR "n", CONST 1))))))), 
            CALL (VAR "f", CONST 10)))
-
-
