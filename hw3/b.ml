@@ -194,8 +194,14 @@ and eval : env -> memory -> exp -> (value * memory)
     let (v, mem1) = eval env mem e1 in
     let l = new_location () in
     let mem2 = extend_mem (l, v) mem1 in
-    let env1 = extend_env (LocBind (x, l)) env in
-    eval env1 mem2 e2
+    let env1 = extend_env (LocBind (x, l)) env in (
+      eval env1 mem2 e2
+    )
+  | LETF (f, args, e1, e2) ->
+    let procedure = (args, e1, env) in
+    let env1 = extend_env (ProcBind (f, procedure)) env in (
+      eval env1 mem e2
+    )
   | ASSIGN (x, e) ->
     let (v, mem') = eval env mem e in
     let l = lookup_loc_env x env in
@@ -203,7 +209,7 @@ and eval : env -> memory -> exp -> (value * memory)
   | ASSIGNF (e1, x, e2) ->
     let (r, mem1) = eval env mem e1 in
     let (v, mem2) = eval env mem1 e2 in
-      (v, )
+      (Unit, mem)
   | WRITE e ->
     let (v1,mem1) = eval env mem e in
     let _ = print_endline(value2str v1) in
