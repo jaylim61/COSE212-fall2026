@@ -169,8 +169,9 @@ and eval : env -> memory -> exp -> (value * memory)
     )
   | SEQ (e1, e2) ->
     let (v1, mem') = eval env mem e1 in
-    let (v2, mem'') = eval env mem' e2 in
-        (v2, mem'')
+    let (v2, mem'') = eval env mem' e2 in (
+      (v2, mem'')
+    )
   | IF (e, e1, e2) ->
     let (b, mem') = eval env mem e in (
       match b with
@@ -184,17 +185,25 @@ and eval : env -> memory -> exp -> (value * memory)
       | Bool true ->
         let (v1, mem1) = eval env mem' e2 in (
           let (v2, mem2) = eval env mem1 (WHILE (e1, e2)) in
-              (v2, mem2)
+            (v2, mem2)
         )
       | Bool false -> (Unit, mem')
       | _ -> raise UndefinedSemantics
     )
   | LETV (x, e1, e2) ->
-    let (v, mem') = eval env mem e1 in ((Unit, mem'))
+    let (v, mem1) = eval env mem e1 in
+    let l = new_location () in
+    let mem2 = extend_mem (l, v) mem1 in
+    let env1 = extend_env (LocBind (x, l)) env in
+    eval env1 mem2 e2
   | ASSIGN (x, e) ->
     let (v, mem') = eval env mem e in
     let l = lookup_loc_env x env in
-        (v, extend_mem (l, v) mem')
+      (v, extend_mem (l, v) mem')
+  | ASSIGNF (e1, x, e2) ->
+    let (r, mem1) = eval env mem e1 in
+    let (v, mem2) = eval env mem1 e2 in
+      (v, )
   | WRITE e ->
     let (v1,mem1) = eval env mem e in
     let _ = print_endline(value2str v1) in
