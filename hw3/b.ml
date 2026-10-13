@@ -135,11 +135,69 @@ let rec eval_aop : env -> memory -> exp -> exp -> (int -> int -> int) -> (value 
 and eval : env -> memory -> exp -> (value * memory)
 = fun env mem e ->
   match e with
+  | UNIT -> (Unit, mem)
+  | TRUE -> (Bool true, mem)
+  | FALSE -> (Bool false, mem)
+  | NUM n -> (Num n, mem)
+  | VAR x ->
+    let l = lookup_loc_env x env in (lookup_mem l mem, mem)
+  | ADD (e1, e2) ->
+    let (v1, mem') = eval env mem e1 in
+    let (v2, mem'') = eval env mem' e2 in (
+      match (v1, v2) with
+      | (Num n1, Num n2) -> (Num (n1 + n2), mem'')
+      | _ -> raise UndefinedSemantics
+    )
+  | SUB (e1, e2) ->
+    let (v1, mem') = eval env mem e1 in
+    let (v2, mem'') = eval env mem' e2 in (
+      match (v1, v2) with
+      | (Num n1, Num n2) -> (Num (n1 - n2), mem'')
+      | _ -> raise UndefinedSemantics
+    )
+  | MUL (e1, e2) ->
+    let (v1, mem') = eval env mem e1 in
+    let (v2, mem'') = eval env mem' e2 in (
+      match (v1, v2) with
+      | (Num n1, Num n2) -> (Num (n1 * n2), mem'')
+      | _ -> raise UndefinedSemantics
+    )
+  | DIV (e1, e2) ->
+    let (v1, mem') = eval env mem e1 in
+    let (v2, mem'') = eval env mem' e2 in (
+      match (v1, v2) with
+      | (Num n1, Num n2) ->
+        if n2 <> 0 then (Num (n1 / n2), mem'')
+        else raise Division_by_zero
+      | _ -> raise UndefinedSemantics
+    )
+  | EQUAL (e1, e2) ->
+    let (v1, mem') = eval env mem e1 in
+    let (v2, mem'') = eval env mem' e2 in (
+      match (v1, v2) with
+      | (Num n1, Num n2) -> (Bool (n1 = n2), mem'')
+      | (Bool b1, Bool b2) -> (Bool (b1 = b2), mem'')
+      | (Unit, Unit) -> (Bool true, mem'')
+      | _ -> raise UndefinedSemantics
+    )
+  | LESS (e1, e2) ->
+    let (v1, mem') = eval env mem e1 in
+    let (v2, mem'') = eval env mem' e2 in (
+      match (v1, v2) with
+      | (Num n1, Num n2) -> (Bool (n1 < n2), mem'')
+      | _ -> raise UndefinedSemantics
+    )
+  | NOT e ->
+    let (v, mem') = eval env mem e in (
+      match v with
+      | Bool b -> (Bool (not b), mem')
+      | _ -> raise UndefinedSemantics
+    )
   | WRITE e ->
     let (v1,mem1) = eval env mem e in
     let _ = print_endline(value2str v1) in
     (v1,mem1)
-  | _ -> raise NotImplemented (* TODO *)
+  | _ -> raise NotImplemented
 
 let runb : exp -> value
 = fun exp -> let (v, _) = eval empty_env empty_mem exp in v;;
