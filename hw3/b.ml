@@ -141,36 +141,10 @@ and eval : env -> memory -> exp -> (value * memory)
   | NUM n -> (Num n, mem)
   | VAR x ->
     let l = lookup_loc_env x env in (lookup_mem l mem, mem)
-  | ADD (e1, e2) ->
-    let (v1, mem') = eval env mem e1 in
-    let (v2, mem'') = eval env mem' e2 in (
-      match (v1, v2) with
-      | (Num n1, Num n2) -> (Num (n1 + n2), mem'')
-      | _ -> raise UndefinedSemantics
-    )
-  | SUB (e1, e2) ->
-    let (v1, mem') = eval env mem e1 in
-    let (v2, mem'') = eval env mem' e2 in (
-      match (v1, v2) with
-      | (Num n1, Num n2) -> (Num (n1 - n2), mem'')
-      | _ -> raise UndefinedSemantics
-    )
-  | MUL (e1, e2) ->
-    let (v1, mem') = eval env mem e1 in
-    let (v2, mem'') = eval env mem' e2 in (
-      match (v1, v2) with
-      | (Num n1, Num n2) -> (Num (n1 * n2), mem'')
-      | _ -> raise UndefinedSemantics
-    )
-  | DIV (e1, e2) ->
-    let (v1, mem') = eval env mem e1 in
-    let (v2, mem'') = eval env mem' e2 in (
-      match (v1, v2) with
-      | (Num n1, Num n2) ->
-        if n2 <> 0 then (Num (n1 / n2), mem'')
-        else raise Division_by_zero
-      | _ -> raise UndefinedSemantics
-    )
+  | ADD (e1, e2) -> eval_aop env mem e1 e2 (+)
+  | SUB (e1, e2) -> eval_aop env mem e1 e2 (-)
+  | MUL (e1, e2) -> eval_aop env mem e1 e2 ( * )
+  | DIV (e1, e2) -> eval_aop env mem e1 e2 (/)
   | EQUAL (e1, e2) ->
     let (v1, mem') = eval env mem e1 in
     let (v2, mem'') = eval env mem' e2 in (
