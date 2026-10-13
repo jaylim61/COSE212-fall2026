@@ -17,7 +17,7 @@ type exp =
   | CALLR of id * id list            (* call by referenece *)
   | RECORD of (id * exp) list        (* record construction *)
   | FIELD of exp * id                (* access record field *)
-  | ASSIGN of id * exp               (* assgin to variable *)
+  | ASSIGN of id * exp               (* assign to variable *)
   | ASSIGNF of exp * id * exp        (* assign to record field *)
   | WRITE of exp
 and id = string
@@ -215,6 +215,12 @@ and eval : env -> memory -> exp -> (value * memory)
       | Bool false -> (Unit, mem')
       | _ -> raise UndefinedSemantics
     )
+  | LETV (x, e1, e2) ->
+    let (v, mem') = eval env mem e1 in ((Unit, mem'))
+  | ASSIGN (x, e) ->
+    let (v, mem') = eval env mem e in
+    let l = lookup_loc_env x env in
+        (v, extend_mem (l, v) mem')
   | WRITE e ->
     let (v1,mem1) = eval env mem e in
     let _ = print_endline(value2str v1) in
