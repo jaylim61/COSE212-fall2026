@@ -193,6 +193,10 @@ and eval : env -> memory -> exp -> (value * memory)
       | Bool b -> (Bool (not b), mem')
       | _ -> raise UndefinedSemantics
     )
+  | SEQ (e1, e2) ->
+    let (v1, mem') = eval env mem e1 in
+    let (v2, mem'') = eval env mem' e2 in
+        (v2, mem'')
   | WRITE e ->
     let (v1,mem1) = eval env mem e in
     let _ = print_endline(value2str v1) in
