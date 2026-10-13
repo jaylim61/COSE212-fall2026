@@ -203,7 +203,18 @@ and eval : env -> memory -> exp -> (value * memory)
       | Bool true -> eval env mem' e1
       | Bool false -> eval env mem' e2
       | _ -> raise UndefinedSemantics
-    )         
+    )
+  | WHILE (e1, e2) ->
+    let (b, mem') = eval env mem e1 in (
+      match b with
+      | Bool true ->
+        let (v1, mem1) = eval env mem' e2 in (
+          let (v2, mem2) = eval env mem1 (WHILE (e1, e2)) in
+              (v2, mem2)
+        )
+      | Bool false -> (Unit, mem')
+      | _ -> raise UndefinedSemantics
+    )
   | WRITE e ->
     let (v1,mem1) = eval env mem e in
     let _ = print_endline(value2str v1) in
